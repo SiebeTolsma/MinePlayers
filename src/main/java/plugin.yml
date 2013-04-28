@@ -1,0 +1,11 @@
+name: Mineplayers
+main: net.bot2k3.siebe.Mineplayers.MineplayersPlugin
+version: 0.1
+
+commands:
+  afk:
+    description: Toggles between AFK and not AFK.
+    usage: /afk
+  list:
+    description: Lists the players currently online
+    usage: /list

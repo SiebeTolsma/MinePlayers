@@ -95,7 +95,7 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
         {
             String playerName = players[i].getName();
             
-            if (this.afkLastSeen.get(playerName).after(now))
+            if (this.afkLastSeen.containsKey(playerName) && this.afkLastSeen.get(playerName).after(now))
             {
                 if (this.afkPlayersAuto.containsKey(playerName) && this.afkPlayersAuto.get(playerName))
                 {

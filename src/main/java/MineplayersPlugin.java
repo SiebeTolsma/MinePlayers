@@ -19,6 +19,7 @@ import org.bukkit.scheduler.*;
 public class MineplayersPlugin extends JavaPlugin implements Listener
 {
     private HashMap<String, Boolean> afkPlayers;
+    private HashMap<String, Boolean> afkPlayersAuto;
     private HashMap<String, GregorianCalendar> afkLastSeen;
     
     /**
@@ -30,6 +31,7 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
     
         this.afkLastSeen = new HashMap<String, GregorianCalendar>();
         this.afkPlayers = new HashMap<String, Boolean>();
+        this.afkPlayersAuto = new HashMap<String, Boolean>();
         
         // register for events
         server.getPluginManager().registerEvents(this, this);
@@ -95,20 +97,24 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
             
             if (this.afkLastSeen.get(playerName).after(now))
             {
-                if (this.afkPlayers.get(playerName))
+                if (this.afkPlayersAuto.containsKey(playerName) && this.afkPlayersAuto.get(playerName))
                 {
                     // this player is no longer AFK.
                     this.afkPlayers.put(playerName, false);
+                    this.afkPlayersAuto.put(playerName, false);
+                    
                     server.broadcastMessage(ChatColor.YELLOW + playerName + " is no longer away.");
                 }
             }
             else
             {
-                if (!this.afkPlayers.get(playerName))
+                if (!this.afkPlayers.containsKey(playerName) || !this.afkPlayers.get(playerName))
                 {
                     // mark this player as AFK, broadcast the message.
                     this.afkPlayers.put(playerName, true);
-                    server.broadcastMessage(ChatColor.YELLOW + playerName + " is now away.");
+                    this.afkPlayersAuto.put(playerName, true);
+                    
+                    server.broadcastMessage(ChatColor.YELLOW + playerName + " is now away (idle).");
                 }
             }
         }
@@ -120,12 +126,14 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
 	@EventHandler
     public void onPlayerJoinEvent(PlayerJoinEvent e)
     {
-        String playerName = e.getPlayer().getName();
+        Player player = e.getPlayer();
+        String playerName = player.getName();
     
         this.afkPlayers.put(playerName, false);
+        this.afkPlayersAuto.put(playerName, false);
         this.afkLastSeen.put(playerName, new GregorianCalendar());
         
-        e.setJoinMessage(e.getJoinMessage() + "\n\n" + this.getListMessage());
+        player.sendMessage(this.getListMessage());
     }
     
     /**
@@ -137,6 +145,7 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
         String playerName = e.getPlayer().getName();
         
         this.afkPlayers.remove(playerName);
+        this.afkPlayersAuto.remove(playerName);
         this.afkLastSeen.remove(playerName);
     }
     
@@ -172,7 +181,10 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
         // if the player is currently AFK, mark them as not-AFK, and vice-versa.
         Server server = this.getServer();
         
-        if (!this.afkPlayers.get(playerName))
+        // whatever happens, this was explicit.
+        this.afkPlayersAuto.put(playerName, false);
+        
+        if (!this.afkPlayers.containsKey(playerName) || !this.afkPlayers.get(playerName))
         {
             this.afkPlayers.put(playerName, true);
             
@@ -218,11 +230,19 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
                 messagePlayers += ", ";
             }
             
-            if (this.afkPlayers.get(playerName))
+            if (this.afkPlayers.containsKey(playerName) && this.afkPlayers.get(playerName))
             {
                 messagePlayers += ChatColor.GRAY;
                 messagePlayers += playerName;
-                messagePlayers += " (AFK)";
+                
+                if (this.afkPlayersAuto.containsKey(playerName) && this.afkPlayersAuto.get(playerName))
+                {
+                    messagePlayers += " (Idle)";
+                }
+                else
+                {
+                    messagePlayers += " (Away)";
+                }
             }
             else
             {
@@ -241,31 +261,3 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
         this.onIdleTimerTick();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

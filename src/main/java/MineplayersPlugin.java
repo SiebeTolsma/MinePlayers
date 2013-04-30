@@ -86,7 +86,7 @@ public class MineplayersPlugin extends JavaPlugin implements Listener
         GregorianCalendar now = new GregorianCalendar();
         
         // any player we haven't seen for 3 minutes is now AFK.
-        now.roll(Calendar.MINUTE, -3);
+        now.add(Calendar.MINUTE, -3);
         
         Server server = this.getServer();
         Player[] players = server.getOnlinePlayers();
